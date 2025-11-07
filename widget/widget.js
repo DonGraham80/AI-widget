@@ -29,11 +29,22 @@
   }
 
   mountEl.innerHTML = `
-    <div id="ai-agent-box" style="border:1px solid #ddd;padding:12px;border-radius:8px;max-width:360px;font-family:sans-serif;background:#fff;">
-      <div id="ai-messages" style="max-height:400px;overflow-y:auto;margin-bottom:8px;"></div>
-      <div style="margin-top:8px;display:flex;gap:4px;">
-        <input id="ai-input" style="flex:1;padding:6px;border:1px solid #ccc;border-radius:4px;" placeholder="Type here..." />
-        <button id="ai-send" style="padding:6px 12px;background:#007bff;color:white;border:none;border-radius:4px;cursor:pointer;">Send</button>
+    <div id="ai-agent-container" style="position:fixed;bottom:20px;right:20px;z-index:9999;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;">
+      <div id="ai-agent-toggle" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-size:28px;">
+        💬
+      </div>
+      <div id="ai-agent-box" style="display:none;position:absolute;bottom:80px;right:0;width:380px;height:500px;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.15);flex-direction:column;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:16px;display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-weight:600;font-size:16px;">AI Assistant</div>
+          <div id="ai-agent-close" style="cursor:pointer;font-size:20px;line-height:1;">×</div>
+        </div>
+        <div id="ai-messages" style="flex:1;overflow-y:auto;padding:16px;background:#f8f9fa;"></div>
+        <div style="padding:16px;background:#fff;border-top:1px solid #e9ecef;">
+          <div style="display:flex;gap:8px;">
+            <input id="ai-input" style="flex:1;padding:10px 12px;border:1px solid #dee2e6;border-radius:8px;font-size:14px;outline:none;" placeholder="Type your message..." />
+            <button id="ai-send" style="padding:10px 20px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:500;font-size:14px;">Send</button>
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -41,24 +52,45 @@
   const messagesEl = document.getElementById("ai-messages");
   const inputEl = document.getElementById("ai-input");
   const sendBtn = document.getElementById("ai-send");
+  const toggleBtn = document.getElementById("ai-agent-toggle");
+  const closeBtn = document.getElementById("ai-agent-close");
+  const chatBox = document.getElementById("ai-agent-box");
 
   let conversation = [
     { role: "system", content: "You are a form-filling assistant." }
   ];
 
+  toggleBtn.addEventListener("click", () => {
+    if (chatBox.style.display === "none") {
+      chatBox.style.display = "flex";
+      toggleBtn.style.display = "none";
+    }
+  });
+
+  closeBtn.addEventListener("click", () => {
+    chatBox.style.display = "none";
+    toggleBtn.style.display = "flex";
+  });
+
   function addMessage(role, text) {
     const div = document.createElement("div");
-    div.style.marginBottom = "8px";
-    div.style.padding = "8px";
-    div.style.borderRadius = "4px";
+    div.style.marginBottom = "12px";
+    div.style.padding = "10px 14px";
+    div.style.borderRadius = "12px";
+    div.style.maxWidth = "85%";
+    div.style.fontSize = "14px";
+    div.style.lineHeight = "1.4";
     
     if (role === "assistant") {
-      div.style.background = "#f0f0f0";
-      div.textContent = "🤖 " + text;
+      div.style.background = "#fff";
+      div.style.border = "1px solid #e9ecef";
+      div.style.marginRight = "auto";
+      div.textContent = text;
     } else {
-      div.style.background = "#e3f2fd";
-      div.style.textAlign = "right";
-      div.textContent = "🧑 " + text;
+      div.style.background = "linear-gradient(135deg,#667eea 0%,#764ba2 100%)";
+      div.style.color = "white";
+      div.style.marginLeft = "auto";
+      div.textContent = text;
     }
     
     messagesEl.appendChild(div);

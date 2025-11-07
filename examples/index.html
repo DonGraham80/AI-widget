@@ -85,7 +85,13 @@
             resultDiv.style.display = 'block';
             resultDiv.innerHTML = `
               <strong>✅ Form Submitted Successfully!</strong>
-              <pre style="margin-top:10px;background:#fff;padding:10px;border-radius:4px;">${JSON.stringify(body, null, 2)}</pre>
+              <p style="margin-top:10px;">Thank you for your submission! We received the following information:</p>
+              <ul style="margin-top:10px;">
+                ${body.name ? `<li><strong>Name:</strong> ${body.name}</li>` : ''}
+                ${body.email ? `<li><strong>Email:</strong> ${body.email}</li>` : ''}
+                ${body.message ? `<li><strong>Message:</strong> ${body.message}</li>` : ''}
+              </ul>
+              <p style="margin-top:10px;color:#666;">We'll get back to you soon!</p>
             `;
             
             resolve({

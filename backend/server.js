@@ -12,8 +12,25 @@ app.use(bodyParser.json());
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+function getAllFields(formConfig) {
+  if (formConfig.fields) {
+    return formConfig.fields;
+  }
+  
+  if (formConfig.sections) {
+    const allFields = {};
+    formConfig.sections.forEach(section => {
+      Object.assign(allFields, section.fields);
+    });
+    return allFields;
+  }
+  
+  return {};
+}
+
 function buildSystemPrompt(formConfig) {
-  const fields = Object.entries(formConfig.fields)
+  const allFields = getAllFields(formConfig);
+  const fields = Object.entries(allFields)
     .map(([key, f]) => `- ${key} (${f.label || key}) ${f.required ? '[required]' : ''}`)
     .join("\n");
 
@@ -61,12 +78,12 @@ app.post("/llm", async (req, res) => {
             parameters: {
               type: "object",
               properties: Object.fromEntries(
-                Object.entries(formConfig.fields).map(([key, f]) => [
+                Object.entries(getAllFields(formConfig)).map(([key, f]) => [
                   key,
                   { type: "string", description: f.label || key }
                 ])
               ),
-              required: Object.entries(formConfig.fields)
+              required: Object.entries(getAllFields(formConfig))
                 .filter(([_, f]) => f.required)
                 .map(([key]) => key)
             }

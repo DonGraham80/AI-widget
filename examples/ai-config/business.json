@@ -1,0 +1,129 @@
+{
+  "name": "Business Application Form",
+  "description": "Collect information for registering a new business, including ownership details, tax preferences, and business type-specific requirements.",
+  "form": {
+    "submitTo": "/api/business/apply",
+    "method": "POST"
+  },
+  "ui": {
+    "greeting": "Hi there! Let's register your business together. I'll ask you a few questions step by step."
+  },
+  "sections": [
+    {
+      "title": "Basic Information",
+      "fields": {
+        "business_name": {
+          "label": "Business Name",
+          "type": "string",
+          "prompt": "What's the legal name of your business?",
+          "required": true
+        },
+        "business_type": {
+          "label": "Business Type",
+          "type": "select",
+          "prompt": "What type of business are you registering?",
+          "options": [
+            "Sole Proprietorship",
+            "Partnership",
+            "Corporation",
+            "Non-Profit",
+            "LLC"
+          ],
+          "required": true
+        },
+        "established_date": {
+          "label": "Date Established",
+          "type": "date",
+          "prompt": "When was your business founded?",
+          "required": false
+        }
+      }
+    },
+    {
+      "title": "Ownership Details",
+      "fields": {
+        "owner_name": {
+          "label": "Owner's Full Name",
+          "type": "string",
+          "prompt": "Who owns the business?",
+          "required": true
+        },
+        "ownership_type": {
+          "label": "Ownership Type",
+          "type": "select",
+          "prompt": "Is there one owner or multiple owners?",
+          "options": ["Single Owner", "Multiple Owners"],
+          "required": true
+        },
+        "partner_details": {
+          "label": "Partner Details",
+          "type": "group",
+          "prompt": "Tell me about the partners.",
+          "show_if": {
+            "field": "ownership_type",
+            "equals": "Multiple Owners"
+          },
+          "fields": {
+            "number_of_partners": {
+              "label": "Number of Partners",
+              "type": "number",
+              "prompt": "How many partners are there?",
+              "required": true
+            },
+            "partner_names": {
+              "label": "Partner Names",
+              "type": "list",
+              "prompt": "Please list the names of all partners separated by commas.",
+              "required": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "title": "Business Operations",
+      "fields": {
+        "industry": {
+          "label": "Industry",
+          "type": "select",
+          "prompt": "Which industry best describes your business?",
+          "options": ["Retail", "Technology", "Healthcare", "Food Service", "Other"],
+          "required": true
+        },
+        "other_industry": {
+          "label": "Other Industry Description",
+          "type": "string",
+          "prompt": "Please describe your industry.",
+          "show_if": {
+            "field": "industry",
+            "equals": "Other"
+          }
+        },
+        "num_employees": {
+          "label": "Number of Employees",
+          "type": "number",
+          "prompt": "How many employees do you have?",
+          "required": true,
+          "validation": {
+            "min": 1
+          }
+        },
+        "has_online_sales": {
+          "label": "Has Online Sales?",
+          "type": "boolean",
+          "prompt": "Do you sell products or services online?",
+          "required": true
+        },
+        "website_url": {
+          "label": "Website URL",
+          "type": "string",
+          "prompt": "What is your website URL?",
+          "show_if": {
+            "field": "has_online_sales",
+            "equals": true
+          }
+        }
+      }
+    }
+  ]
+}

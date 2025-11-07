@@ -1,0 +1,37 @@
+{
+  "name": "Business Ownership Details",
+  "description": "Collect information about business ownership",
+  "form": {
+    "submitTo": "/api/business/apply",
+    "method": "POST"
+  },
+  "fields": {
+    "owner_name": {
+      "label": "Owner's Full Name",
+      "type": "string",
+      "prompt": "Who owns the business?",
+      "required": true
+    },
+    "ownership_type": {
+      "label": "Ownership Type",
+      "type": "string",
+      "prompt": "Is there one owner or multiple owners? (Single Owner or Multiple Owners)",
+      "required": true
+    },
+    "number_of_partners": {
+      "label": "Number of Partners",
+      "type": "string",
+      "prompt": "How many partners are there?",
+      "required": false
+    },
+    "partner_names": {
+      "label": "Partner Names",
+      "type": "string",
+      "prompt": "Please list the names of all partners separated by commas.",
+      "required": false
+    }
+  },
+  "ui": {
+    "greeting": "Now let's get information about the ownership structure."
+  }
+}

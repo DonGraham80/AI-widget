@@ -1,0 +1,43 @@
+{
+  "name": "Business Operations",
+  "description": "Collect information about business operations",
+  "form": {
+    "submitTo": "/api/business/apply",
+    "method": "POST"
+  },
+  "fields": {
+    "industry": {
+      "label": "Industry",
+      "type": "string",
+      "prompt": "Which industry best describes your business? (Retail, Technology, Healthcare, Food Service, or Other)",
+      "required": true
+    },
+    "other_industry": {
+      "label": "Other Industry Description",
+      "type": "string",
+      "prompt": "Please describe your industry.",
+      "required": false
+    },
+    "num_employees": {
+      "label": "Number of Employees",
+      "type": "string",
+      "prompt": "How many employees do you have?",
+      "required": true
+    },
+    "has_online_sales": {
+      "label": "Has Online Sales?",
+      "type": "string",
+      "prompt": "Do you sell products or services online? (yes or no)",
+      "required": true
+    },
+    "website_url": {
+      "label": "Website URL",
+      "type": "string",
+      "prompt": "What is your website URL?",
+      "required": false
+    }
+  },
+  "ui": {
+    "greeting": "Finally, let's learn about your business operations."
+  }
+}

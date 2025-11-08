@@ -1,0 +1,30 @@
+{
+  "name": "Business Registration Workflow",
+  "description": "Complete business registration in multiple steps",
+  "mode": "accumulate",
+  "steps": [
+    {
+      "id": "basic",
+      "title": "Basic Information",
+      "config": "./ai-config/business-basic.json"
+    },
+    {
+      "id": "ownership",
+      "title": "Ownership Details",
+      "config": "./ai-config/business-ownership.json",
+      "when": {
+        "field": "basic.business_type",
+        "in": ["Partnership", "Corporation", "LLC"]
+      }
+    },
+    {
+      "id": "operations",
+      "title": "Business Operations",
+      "config": "./ai-config/business-operations.json"
+    }
+  ],
+  "finalSubmit": {
+    "submitTo": "/api/business/apply",
+    "method": "POST"
+  }
+}

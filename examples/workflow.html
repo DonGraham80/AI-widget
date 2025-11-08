@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Form Agent - Demo</title>
+  <title>AI Form Agent - Multi-Form Workflow Demo</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -39,6 +39,12 @@
       padding: 2px 6px;
       border-radius: 3px;
       font-family: monospace;
+    }
+    .feature-list {
+      margin-top: 15px;
+    }
+    .feature-list li {
+      margin-bottom: 8px;
     }
     .nav-section {
       background: #f8f9fa;
@@ -92,12 +98,12 @@
 </head>
 <body>
   <div class="demo-container">
-    <h1>AI Form Agent Demo</h1>
+    <h1>AI Form Agent - Multi-Form Workflow Demo</h1>
     
     <div class="nav-section">
       <h2>📋 Available Demos</h2>
       <div class="demo-links">
-        <a href="index.html" class="demo-link active">
+        <a href="index.html" class="demo-link">
           <div class="demo-link-title">Contact Form</div>
           <div class="demo-link-desc">Simple single-form demo with name, email, and message fields</div>
         </a>
@@ -105,7 +111,7 @@
           <div class="demo-link-title">Business Form</div>
           <div class="demo-link-desc">Complex form with sections, conditional fields, and multiple field types</div>
         </a>
-        <a href="workflow.html" class="demo-link">
+        <a href="workflow.html" class="demo-link active">
           <div class="demo-link-title">Multi-Form Workflow</div>
           <div class="demo-link-desc">Multi-step workflow with conditional logic and data passing between steps</div>
         </a>
@@ -114,8 +120,15 @@
     
     <div class="info">
       <strong>How it works:</strong>
-      <p>This demo shows the AI form agent in action. The agent will chat with you to collect the required information, then submit it to a mock API endpoint.</p>
-      <p>Try saying things like "Hi", "My name is John", or "john@example.com"</p>
+      <p>This demo shows the AI form agent handling a multi-step business registration workflow with:</p>
+      <ul class="feature-list">
+        <li>✅ <strong>Multiple Steps:</strong> Basic Info → Ownership Details → Operations</li>
+        <li>✅ <strong>Progress Indicator:</strong> Shows current step (e.g., "Step 2 of 3")</li>
+        <li>✅ <strong>Conditional Logic:</strong> Ownership step only shows for Partnership, Corporation, or LLC</li>
+        <li>✅ <strong>Data Passing:</strong> Information from previous steps is available to the AI</li>
+        <li>✅ <strong>Single Submission:</strong> All data submitted together at the end</li>
+      </ul>
+      <p style="margin-top:15px;">Try saying: "I want to register my tech company called InnovateTech as an LLC"</p>
     </div>
 
     <!-- AI Agent will render here -->
@@ -128,9 +141,9 @@
   <script>
     // Mock API endpoint for testing
     window.mockAPI = {
-      contact: async function(data) {
-        console.log('Mock API received:', data);
-        return { success: true, message: 'Form submitted successfully!' };
+      business: async function(data) {
+        console.log('Mock API received workflow data:', data);
+        return { success: true, message: 'Business registration workflow completed!' };
       }
     };
 
@@ -139,8 +152,8 @@
     window.fetch = function(...args) {
       const url = args[0];
       
-      // Mock the contact API endpoint
-      if (typeof url === 'string' && url.includes('/api/contact')) {
+      // Mock the business API endpoint
+      if (typeof url === 'string' && url.includes('/api/business/apply')) {
         return new Promise((resolve) => {
           setTimeout(() => {
             const request = args[1];
@@ -149,20 +162,36 @@
             // Display the submission result
             const resultDiv = document.getElementById('submission-result');
             resultDiv.style.display = 'block';
-            resultDiv.innerHTML = `
-              <strong>✅ Form Submitted Successfully!</strong>
-              <p style="margin-top:10px;">Thank you for your submission! We received the following information:</p>
-              <ul style="margin-top:10px;">
-                ${body.name ? `<li><strong>Name:</strong> ${body.name}</li>` : ''}
-                ${body.email ? `<li><strong>Email:</strong> ${body.email}</li>` : ''}
-                ${body.message ? `<li><strong>Message:</strong> ${body.message}</li>` : ''}
-              </ul>
-              <p style="margin-top:10px;color:#666;">We'll get back to you soon!</p>
-            `;
+            
+            let html = '<strong>✅ Business Registration Workflow Completed!</strong>';
+            html += '<p style="margin-top:10px;">Thank you for completing the multi-step registration! Here\'s all the information we collected:</p>';
+            html += '<div style="margin-top:10px;background:#f5f5f5;padding:12px;border-radius:4px;font-family:monospace;font-size:13px;">';
+            
+            // Group data by step
+            const stepData = {};
+            for (const [key, value] of Object.entries(body)) {
+              const [step, field] = key.split('.');
+              if (!stepData[step]) stepData[step] = {};
+              stepData[step][field] = value;
+            }
+            
+            // Display grouped data
+            for (const [step, fields] of Object.entries(stepData)) {
+              html += `<div style="margin-bottom:12px;"><strong style="color:#667eea;">${step.toUpperCase()}:</strong><ul style="margin:4px 0 0 20px;">`;
+              for (const [field, value] of Object.entries(fields)) {
+                html += `<li>${field}: ${value}</li>`;
+              }
+              html += '</ul></div>';
+            }
+            
+            html += '</div>';
+            html += '<p style="margin-top:10px;color:#666;">We\'ll review your application and get back to you soon!</p>';
+            
+            resultDiv.innerHTML = html;
             
             resolve({
               ok: true,
-              json: async () => ({ success: true, message: 'Form submitted!' })
+              json: async () => ({ success: true, message: 'Business registration completed!' })
             });
           }, 500);
         });
@@ -173,11 +202,11 @@
     };
   </script>
 
-  <!-- Load the AI Agent Widget -->
+  <!-- Load the AI Agent Widget with Workflow -->
   <script
     src="../widget/widget.js"
-    data-config="./ai-config/contact.json"
-    data-site-key="DEMO_SITE_123"
+    data-workflow="./ai-config/business-workflow.json"
+    data-site-key="DEMO_WORKFLOW_123"
     data-backend-url="http://localhost:3000"
   ></script>
 </body>

@@ -1,0 +1,31 @@
+{
+  "name": "Business Basic Information",
+  "description": "Collect basic information about the business",
+  "form": {
+    "submitTo": "/api/business/apply",
+    "method": "POST"
+  },
+  "fields": {
+    "business_name": {
+      "label": "Business Name",
+      "type": "string",
+      "prompt": "What's the legal name of your business?",
+      "required": true
+    },
+    "business_type": {
+      "label": "Business Type",
+      "type": "string",
+      "prompt": "What type of business are you registering? (Sole Proprietorship, Partnership, Corporation, Non-Profit, or LLC)",
+      "required": true
+    },
+    "established_date": {
+      "label": "Date Established",
+      "type": "string",
+      "prompt": "When was your business founded?",
+      "required": false
+    }
+  },
+  "ui": {
+    "greeting": "Let's start with some basic information about your business."
+  }
+}

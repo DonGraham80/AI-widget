@@ -52,7 +52,11 @@
     }
   } else {
     try {
-      formConfig = await fetch(configUrl, { credentials: "include" }).then(r => r.json());
+      const cacheBuster = `?v=${Date.now()}`;
+      formConfig = await fetch(`${configUrl}${cacheBuster}`, { 
+        credentials: "include",
+        cache: "no-store"
+      }).then(r => r.json());
     } catch (error) {
       console.error("AI Agent: Failed to load config", error);
       mountEl.innerHTML = '<div style="color:red;padding:12px;">Failed to load form configuration</div>';
@@ -189,6 +193,10 @@
   }
 
   async function createPlayerHtml(data, config) {
+    if (!config.tasks?.new_player_form) {
+      throw new Error("This page's configuration doesn't include the new player form. Please refresh the page and try again.");
+    }
+    
     const newFormUrl = config.tasks.new_player_form.url;
     const html = await fetch(newFormUrl, { credentials: "include" }).then(r => r.text());
     const doc = new DOMParser().parseFromString(html, "text/html");

@@ -1,0 +1,40 @@
+{
+  "name": "Football Club Admin",
+  "description": "HTML-based admin screens for players.",
+  "mode": "html-scraping",
+  "tasks": {
+    "list_players": {
+      "type": "html",
+      "method": "GET",
+      "url": "/examples/admin/players.html",
+      "tableSelector": "table#players tbody tr",
+      "columns": {
+        "name": "td:nth-child(1)",
+        "squad_number": "td:nth-child(2)",
+        "position": "td:nth-child(3)",
+        "dob": "td:nth-child(4)",
+        "edit_url": "td:nth-child(5) a.edit"
+      }
+    },
+    "edit_player_form": {
+      "type": "html",
+      "method": "GET",
+      "url": "/examples/admin/players/{{id}}/edit.html",
+      "formSelector": "form#player-edit"
+    },
+    "update_player_form": {
+      "type": "html-submit",
+      "method": "POST",
+      "url": "/examples/admin/players/{{id}}"
+    }
+  },
+  "ui": {
+    "greeting": "Hi! I can update player records — tell me who and what to change."
+  },
+  "editableFields": {
+    "dob": "player[dob]",
+    "name": "player[name]",
+    "position": "player[position]",
+    "squad_number": "player[squad_number]"
+  }
+}

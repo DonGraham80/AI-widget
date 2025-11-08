@@ -162,6 +162,76 @@
     }
   }
 
+  async function findPlayerByName(name, config) {
+    const task = config.tasks.list_players;
+    const html = await fetch(task.url, { credentials: "include" }).then(r => r.text());
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const rows = doc.querySelectorAll(task.tableSelector);
+
+    name = name.toLowerCase();
+    let match = null;
+
+    rows.forEach(row => {
+      const playerName = row.querySelector(task.columns.name).textContent.trim().toLowerCase();
+      if (playerName === name && !match) {
+        const editLink = row.querySelector(task.columns.edit_url);
+        match = {
+          name: playerName,
+          editUrl: editLink.getAttribute("href"),
+          squad_number: row.querySelector(task.columns.squad_number).textContent.trim(),
+          position: row.querySelector(task.columns.position).textContent.trim(),
+          dob: row.querySelector(task.columns.dob).textContent.trim()
+        };
+      }
+    });
+
+    return match;
+  }
+
+  async function updatePlayerHtml(editUrl, logicalField, newValue, config) {
+    const html = await fetch(editUrl, { credentials: "include" }).then(r => r.text());
+    const doc = new DOMParser().parseFromString(html, "text/html");
+
+    const form = doc.querySelector(config.tasks.edit_player_form.formSelector);
+    if (!form) {
+      throw new Error("Form not found on edit page");
+    }
+
+    let action = form.getAttribute("action") || editUrl;
+    const method = (form.getAttribute("method") || "POST").toUpperCase();
+
+    const formData = new FormData();
+    form.querySelectorAll("input, select, textarea").forEach(el => {
+      if (!el.name) return;
+      if (el.tagName === "SELECT") {
+        formData.append(el.name, el.value);
+      } else if (el.type === "checkbox" || el.type === "radio") {
+        if (el.checked) formData.append(el.name, el.value);
+      } else {
+        formData.append(el.name, el.value);
+      }
+    });
+
+    const realFieldName = config.editableFields[logicalField];
+    if (realFieldName) {
+      formData.set(realFieldName, newValue);
+    }
+
+    try {
+      const actionUrl = new URL(action, window.location.origin);
+      action = `${backendUrl}${actionUrl.pathname}`;
+    } catch (e) {
+      console.warn("Could not parse action URL, using as-is:", action);
+    }
+
+    const resp = await fetch(action, {
+      method,
+      body: formData
+    });
+
+    return resp.ok;
+  }
+
   async function sendToBackend(userText) {
     try {
       const payload = {
@@ -219,7 +289,44 @@
     conversation.push({ role: "user", content: userText });
     conversation.push({ role: "assistant", content: res.reply });
 
-    if (res.status === "complete_step") {
+    if (res.status === "action" && res.action) {
+      if (res.action.type === "update_player_html") {
+        try {
+          sendBtn.disabled = true;
+          sendBtn.textContent = "...";
+          
+          const player = await findPlayerByName(res.action.target_name, formConfig);
+          
+          if (!player) {
+            addMessage("assistant", `I couldn't find a player named "${res.action.target_name}". Please check the name and try again.`);
+            sendBtn.disabled = false;
+            sendBtn.textContent = "Send";
+            return;
+          }
+          
+          const success = await updatePlayerHtml(
+            player.editUrl,
+            res.action.field,
+            res.action.value,
+            formConfig
+          );
+          
+          if (success) {
+            addMessage("assistant", `✅ Successfully updated ${res.action.target_name}'s ${res.action.field} to "${res.action.value}"!`);
+          } else {
+            addMessage("assistant", `I had trouble updating the player record. Please try again.`);
+          }
+          
+          sendBtn.disabled = false;
+          sendBtn.textContent = "Send";
+        } catch (error) {
+          console.error("AI Agent: HTML scraping action failed", error);
+          addMessage("assistant", `Sorry, I encountered an error while updating the player: ${error.message}`);
+          sendBtn.disabled = false;
+          sendBtn.textContent = "Send";
+        }
+      }
+    } else if (res.status === "complete_step") {
       aggregatedData = res.aggregatedData;
       stepHistory.push(currentStep.id);
       

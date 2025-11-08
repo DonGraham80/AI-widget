@@ -7,8 +7,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -68,6 +69,24 @@ function getAllFields(formConfig) {
 }
 
 function buildSystemPrompt(formConfig, aggregatedData = null) {
+  if (formConfig.mode === "html-scraping") {
+    const editableFields = Object.keys(formConfig.editableFields || {}).join(", ");
+    return `
+You are an assistant that helps users update player records in a football club admin system.
+
+Available fields you can update: ${editableFields}
+
+Rules:
+- When a user wants to update a player, extract:
+  1. The player's name (target_name)
+  2. The field to update (field) - must be one of: ${editableFields}
+  3. The new value (value)
+- Use the update_player tool to perform the update.
+- Be conversational and confirm what you're about to update.
+- If the user's request is unclear, ask for clarification.
+    `.trim();
+  }
+
   const allFields = getAllFields(formConfig);
   const fields = Object.entries(allFields)
     .map(([key, f]) => `- ${key} (${f.label || key}) ${f.required ? '[required]' : ''}`)
@@ -147,13 +166,38 @@ app.post("/llm", async (req, res) => {
 
     const userConversation = messages.filter(m => m.role !== "system");
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...userConversation
-      ],
-      tools: [
+    let tools;
+    if (formConfig.mode === "html-scraping") {
+      tools = [
+        {
+          type: "function",
+          function: {
+            name: "update_player",
+            description: "Update a player's information in the system",
+            parameters: {
+              type: "object",
+              properties: {
+                target_name: {
+                  type: "string",
+                  description: "The full name of the player to update"
+                },
+                field: {
+                  type: "string",
+                  description: "The field to update",
+                  enum: Object.keys(formConfig.editableFields || {})
+                },
+                value: {
+                  type: "string",
+                  description: "The new value for the field"
+                }
+              },
+              required: ["target_name", "field", "value"]
+            }
+          }
+        }
+      ];
+    } else {
+      tools = [
         {
           type: "function",
           function: {
@@ -173,7 +217,16 @@ app.post("/llm", async (req, res) => {
             }
           }
         }
+      ];
+    }
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...userConversation
       ],
+      tools,
       tool_choice: "auto"
     });
 
@@ -183,6 +236,19 @@ app.post("/llm", async (req, res) => {
     if (msg.tool_calls && msg.tool_calls.length > 0) {
       const toolCall = msg.tool_calls[0];
       const collected = JSON.parse(toolCall.function.arguments);
+
+      if (toolCall.function.name === "update_player") {
+        return res.json({
+          reply: `I found ${collected.target_name}. Updating their ${collected.field} now.`,
+          status: "action",
+          action: {
+            type: "update_player_html",
+            target_name: collected.target_name,
+            field: collected.field,
+            value: collected.value
+          }
+        });
+      }
 
       if (workflowId && stepId) {
         const instance = workflowInstances.get(workflowId);
@@ -236,6 +302,11 @@ app.post("/llm", async (req, res) => {
       message: error.message 
     });
   }
+});
+
+app.post("/admin/players/:id", (req, res) => {
+  console.log(`Player ${req.params.id} updated:`, req.body);
+  res.json({ success: true, message: "Player updated successfully" });
 });
 
 app.get("/health", (req, res) => {

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Player - Ethan Brooks</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .admin-container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 15px;
+      font-weight: 500;
+      color: #555;
+    }
+    input, select {
+      display: block;
+      width: 100%;
+      padding: 8px 12px;
+      margin-top: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    button:hover {
+      background: #5568d3;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: #667eea;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    .success {
+      background: #c8e6c9;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <a href="/admin/players" class="back-link">← Back to Players</a>
+    
+    <h1>Edit Player</h1>
+    
+    <div id="success-message" class="success"></div>
+    
+    <form id="player-edit" action="/admin/players/3" method="POST">
+      <input type="hidden" name="_token" value="FAKE_CSRF_TOKEN_12345">
+      <input type="hidden" name="_method" value="PATCH">
+
+      <label>
+        Name
+        <input type="text" name="player[name]" value="Ethan Brooks" required>
+      </label>
+
+      <label>
+        Date of birth
+        <input type="date" name="player[dob]" value="2008-08-21" required>
+      </label>
+
+      <label>
+        Position
+        <select name="player[position]" required>
+          <option>Goalkeeper</option>
+          <option>Forward</option>
+          <option selected>Midfielder</option>
+          <option>Defender</option>
+        </select>
+      </label>
+
+      <label>
+        Squad #
+        <input type="number" name="player[squad_number]" value="7" min="1" max="99" required>
+      </label>
+
+      <button type="submit">Save</button>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('player-edit').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(this);
+      const data = {};
+      for (let [key, value] of formData.entries()) {
+        data[key] = value;
+      }
+      
+      console.log('Form submitted:', data);
+      
+      const successDiv = document.getElementById('success-message');
+      successDiv.textContent = '✅ Player updated successfully!';
+      successDiv.style.display = 'block';
+      
+      setTimeout(() => {
+        successDiv.style.display = 'none';
+      }, 3000);
+    });
+  </script>
+</body>
+</html>

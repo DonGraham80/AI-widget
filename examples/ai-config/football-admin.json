@@ -16,6 +16,17 @@
         "edit_url": "td:nth-child(5) a.edit"
       }
     },
+    "new_player_form": {
+      "type": "html",
+      "method": "GET",
+      "url": "/examples/admin/players/new.html",
+      "formSelector": "form#player-new"
+    },
+    "create_player_form": {
+      "type": "html-submit",
+      "method": "POST",
+      "url": "/admin/players"
+    },
     "edit_player_form": {
       "type": "html",
       "method": "GET",
@@ -25,16 +36,17 @@
     "update_player_form": {
       "type": "html-submit",
       "method": "POST",
-      "url": "/examples/admin/players/{{id}}"
+      "url": "/admin/players/{{id}}"
     }
   },
   "ui": {
-    "greeting": "Hi! I can update player records — tell me who and what to change."
+    "greeting": "Hi! I can help you add new players or update existing player records."
   },
   "editableFields": {
     "dob": "player[dob]",
     "name": "player[name]",
     "position": "player[position]",
     "squad_number": "player[squad_number]"
-  }
+  },
+  "requiredFields": ["name", "dob", "position", "squad_number"]
 }

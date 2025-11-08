@@ -188,6 +188,49 @@
     return match;
   }
 
+  async function createPlayerHtml(data, config) {
+    const newFormUrl = config.tasks.new_player_form.url;
+    const html = await fetch(newFormUrl, { credentials: "include" }).then(r => r.text());
+    const doc = new DOMParser().parseFromString(html, "text/html");
+
+    const form = doc.querySelector(config.tasks.new_player_form.formSelector);
+    if (!form) {
+      throw new Error("New player form not found");
+    }
+
+    let action = form.getAttribute("action") || config.tasks.create_player_form.url;
+    const method = (form.getAttribute("method") || "POST").toUpperCase();
+
+    const formData = new FormData();
+    
+    form.querySelectorAll("input[type='hidden']").forEach(el => {
+      if (el.name) {
+        formData.append(el.name, el.value);
+      }
+    });
+
+    Object.keys(data).forEach(logicalField => {
+      const realFieldName = config.editableFields[logicalField];
+      if (realFieldName) {
+        formData.set(realFieldName, data[logicalField]);
+      }
+    });
+
+    try {
+      const actionUrl = new URL(action, window.location.origin);
+      action = `${backendUrl}${actionUrl.pathname}`;
+    } catch (e) {
+      console.warn("Could not parse action URL, using as-is:", action);
+    }
+
+    const resp = await fetch(action, {
+      method,
+      body: formData
+    });
+
+    return resp.ok;
+  }
+
   async function updatePlayerHtml(editUrl, logicalField, newValue, config) {
     const html = await fetch(editUrl, { credentials: "include" }).then(r => r.text());
     const doc = new DOMParser().parseFromString(html, "text/html");
@@ -290,7 +333,28 @@
     conversation.push({ role: "assistant", content: res.reply });
 
     if (res.status === "action" && res.action) {
-      if (res.action.type === "update_player_html") {
+      if (res.action.type === "create_player_html") {
+        try {
+          sendBtn.disabled = true;
+          sendBtn.textContent = "...";
+          
+          const success = await createPlayerHtml(res.action.data, formConfig);
+          
+          if (success) {
+            addMessage("assistant", `✅ Successfully created new player: ${res.action.data.name}!`);
+          } else {
+            addMessage("assistant", `I had trouble creating the player record. Please try again.`);
+          }
+          
+          sendBtn.disabled = false;
+          sendBtn.textContent = "Send";
+        } catch (error) {
+          console.error("AI Agent: Create player action failed", error);
+          addMessage("assistant", `Sorry, I encountered an error while creating the player: ${error.message}`);
+          sendBtn.disabled = false;
+          sendBtn.textContent = "Send";
+        }
+      } else if (res.action.type === "update_player_html") {
         try {
           sendBtn.disabled = true;
           sendBtn.textContent = "...";
@@ -326,7 +390,7 @@
           sendBtn.textContent = "Send";
         }
       }
-    } else if (res.status === "complete_step") {
+    }else if (res.status === "complete_step") {
       aggregatedData = res.aggregatedData;
       stepHistory.push(currentStep.id);
       

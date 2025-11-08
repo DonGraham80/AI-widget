@@ -71,18 +71,26 @@ function getAllFields(formConfig) {
 function buildSystemPrompt(formConfig, aggregatedData = null) {
   if (formConfig.mode === "html-scraping") {
     const editableFields = Object.keys(formConfig.editableFields || {}).join(", ");
+    const requiredFields = (formConfig.requiredFields || []).join(", ");
     return `
-You are an assistant that helps users update player records in a football club admin system.
+You are an assistant that helps users manage player records in a football club admin system.
 
-Available fields you can update: ${editableFields}
+Available fields: ${editableFields}
+Required fields for new players: ${requiredFields}
 
 Rules:
-- When a user wants to update a player, extract:
-  1. The player's name (target_name)
+- When a user wants to ADD/CREATE a new player:
+  1. Collect all required fields: ${requiredFields}
+  2. Use the create_player tool with all the field values
+  3. Be conversational and confirm before creating
+  
+- When a user wants to UPDATE an existing player:
+  1. Extract the player's name (target_name)
   2. The field to update (field) - must be one of: ${editableFields}
   3. The new value (value)
-- Use the update_player tool to perform the update.
-- Be conversational and confirm what you're about to update.
+  4. Use the update_player tool to perform the update
+  
+- Be conversational and confirm what you're about to do.
 - If the user's request is unclear, ask for clarification.
     `.trim();
   }
@@ -172,6 +180,23 @@ app.post("/llm", async (req, res) => {
         {
           type: "function",
           function: {
+            name: "create_player",
+            description: "Create a new player in the system",
+            parameters: {
+              type: "object",
+              properties: Object.fromEntries(
+                Object.keys(formConfig.editableFields || {}).map(key => [
+                  key,
+                  { type: "string", description: `Player's ${key}` }
+                ])
+              ),
+              required: formConfig.requiredFields || []
+            }
+          }
+        },
+        {
+          type: "function",
+          function: {
             name: "update_player",
             description: "Update a player's information in the system",
             parameters: {
@@ -236,6 +261,17 @@ app.post("/llm", async (req, res) => {
     if (msg.tool_calls && msg.tool_calls.length > 0) {
       const toolCall = msg.tool_calls[0];
       const collected = JSON.parse(toolCall.function.arguments);
+
+      if (toolCall.function.name === "create_player") {
+        return res.json({
+          reply: `Creating new player: ${collected.name}`,
+          status: "action",
+          action: {
+            type: "create_player_html",
+            data: collected
+          }
+        });
+      }
 
       if (toolCall.function.name === "update_player") {
         return res.json({
@@ -302,6 +338,11 @@ app.post("/llm", async (req, res) => {
       message: error.message 
     });
   }
+});
+
+app.post("/admin/players", (req, res) => {
+  console.log(`New player created:`, req.body);
+  res.json({ success: true, message: "Player created successfully" });
 });
 
 app.post("/admin/players/:id", (req, res) => {

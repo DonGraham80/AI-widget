@@ -239,6 +239,26 @@
     return resp.ok;
   }
 
+  function updateTableCell(playerName, field, newValue, config) {
+    if (!config.tasks?.list_players) return;
+    
+    const task = config.tasks.list_players;
+    const rows = document.querySelectorAll(task.tableSelector);
+    
+    rows.forEach(row => {
+      const nameCell = row.querySelector(task.columns.name);
+      if (nameCell && nameCell.textContent.trim().toLowerCase() === playerName.toLowerCase()) {
+        const fieldSelector = task.columns[field];
+        if (fieldSelector) {
+          const fieldCell = row.querySelector(fieldSelector);
+          if (fieldCell) {
+            fieldCell.textContent = newValue;
+          }
+        }
+      }
+    });
+  }
+
   async function updatePlayerHtml(editUrl, logicalField, newValue, config) {
     const html = await fetch(editUrl, { credentials: "include" }).then(r => r.text());
     const doc = new DOMParser().parseFromString(html, "text/html");
@@ -384,6 +404,7 @@
           );
           
           if (success) {
+            updateTableCell(res.action.target_name, res.action.field, res.action.value, formConfig);
             addMessage("assistant", `✅ Successfully updated ${res.action.target_name}'s ${res.action.field} to "${res.action.value}"!`);
           } else {
             addMessage("assistant", `I had trouble updating the player record. Please try again.`);

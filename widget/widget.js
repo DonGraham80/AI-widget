@@ -240,23 +240,42 @@
   }
 
   function updateTableCell(playerName, field, newValue, config) {
-    if (!config.tasks?.list_players) return;
+    console.log('[updateTableCell] Called with:', { playerName, field, newValue });
+    if (!config.tasks?.list_players) {
+      console.log('[updateTableCell] No list_players config found');
+      return;
+    }
     
     const task = config.tasks.list_players;
     const rows = document.querySelectorAll(task.tableSelector);
+    console.log('[updateTableCell] Found rows:', rows.length);
     
+    let updated = false;
     rows.forEach(row => {
       const nameCell = row.querySelector(task.columns.name);
       if (nameCell && nameCell.textContent.trim().toLowerCase() === playerName.toLowerCase()) {
+        console.log('[updateTableCell] Found matching row for:', playerName);
         const fieldSelector = task.columns[field];
+        console.log('[updateTableCell] Field selector:', fieldSelector);
         if (fieldSelector) {
           const fieldCell = row.querySelector(fieldSelector);
           if (fieldCell) {
+            console.log('[updateTableCell] Old value:', fieldCell.textContent);
             fieldCell.textContent = newValue;
+            console.log('[updateTableCell] New value:', fieldCell.textContent);
+            updated = true;
+          } else {
+            console.log('[updateTableCell] Field cell not found');
           }
+        } else {
+          console.log('[updateTableCell] Field selector not found for field:', field);
         }
       }
     });
+    
+    if (!updated) {
+      console.log('[updateTableCell] No cell was updated');
+    }
   }
 
   async function updatePlayerHtml(editUrl, logicalField, newValue, config) {
